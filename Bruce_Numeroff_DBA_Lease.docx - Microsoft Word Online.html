@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mix Ratio Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #14171a;
+    --bg-grain: #171b1e;
+    --panel: #1f2327;
+    --panel-raised: #262b30;
+    --border: #33383d;
+    --border-soft: #2a2f34;
+    --text: #f2efe9;
+    --text-muted: #8b9096;
+    --amber: #e8930c;
+    --amber-dim: #7a5312;
+    --teal: #5fa8b0;
+    --error: #d6534a;
+    --shadow: rgba(0,0,0,0.45);
+  }
+
+  *{box-sizing:border-box;}
+
+  html,body{
+    margin:0;
+    padding:0;
+    background:
+      radial-gradient(circle at 20% -10%, rgba(232,147,12,0.06), transparent 45%),
+      repeating-linear-gradient(0deg, var(--bg-grain) 0px, var(--bg-grain) 1px, var(--bg) 1px, var(--bg) 3px),
+      var(--bg);
+    color:var(--text);
+    font-family:'IBM Plex Mono', monospace;
+    min-height:100vh;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:48px 20px;
+  }
+
+  .wrap{
+    width:100%;
+    max-width:920px;
+  }
+
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.32em;
+    color:var(--amber);
+    text-transform:uppercase;
+    margin:0 0 8px 2px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .eyebrow::before{
+    content:'';
+    width:18px;
+    height:2px;
+    background:var(--amber);
+    display:inline-block;
+  }
+
+  h1{
+    font-family:'Oswald', sans-serif;
+    font-weight:700;
+    font-size:clamp(28px, 5vw, 44px);
+    text-transform:uppercase;
+    letter-spacing:0.01em;
+    margin:0 0 6px 0;
+    line-height:1.02;
+  }
+
+  .sub{
+    color:var(--text-muted);
+    font-size:13px;
+    margin:0 0 32px 2px;
+    max-width:520px;
+    line-height:1.5;
+  }
+
+  .plate{
+    background:linear-gradient(180deg, var(--panel-raised), var(--panel));
+    border:1px solid var(--border);
+    border-radius:6px;
+    box-shadow:
+      0 24px 48px -20px var(--shadow),
+      inset 0 1px 0 rgba(255,255,255,0.03);
+    padding:0;
+    overflow:hidden;
+    position:relative;
+  }
+  .plate::before{
+    content:'';
+    position:absolute;
+    top:0; left:0; right:0;
+    height:1px;
+    background:linear-gradient(90deg, transparent, rgba(232,147,12,0.35), transparent);
+  }
+
+  .rivets{
+    position:absolute;
+    inset:10px;
+    pointer-events:none;
+    border:1px dashed rgba(255,255,255,0.04);
+    border-radius:4px;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap:0;
+  }
+  @media (max-width: 720px){
+    .grid{grid-template-columns: 1fr;}
+  }
+
+  .col{
+    padding:32px 30px;
+  }
+  .col.inputs{
+    border-right:1px solid var(--border-soft);
+  }
+  @media (max-width: 720px){
+    .col.inputs{border-right:none; border-bottom:1px solid var(--border-soft);}
+  }
+
+  .field{
+    margin-bottom:26px;
+  }
+  .label{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    font-size:10px;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color:var(--text-muted);
+    margin-bottom:10px;
+  }
+  .label .tag{
+    color:var(--amber);
+    font-weight:600;
+  }
+
+  select, input[type=number]{
+    width:100%;
+    background:#15181b;
+    border:1px solid var(--border);
+    color:var(--text);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:16px;
+    font-weight:600;
+    padding:13px 14px;
+    border-radius:4px;
+    outline:none;
+    transition:border-color .15s ease, box-shadow .15s ease;
+    appearance:none;
+    -webkit-appearance:none;
+  }
+  select{
+    background-image: linear-gradient(45deg, transparent 50%, var(--amber) 50%), linear-gradient(135deg, var(--amber) 50%, transparent 50%);
+    background-position: calc(100% - 20px) center, calc(100% - 15px) center;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+    cursor:pointer;
+  }
+  select:focus, input[type=number]:focus{
+    border-color:var(--amber);
+    box-shadow:0 0 0 3px rgba(232,147,12,0.14);
+  }
+  select:focus-visible, input[type=number]:focus-visible{
+    outline:2px solid var(--amber);
+    outline-offset:2px;
+  }
+
+  .custom-ratio{
+    display:none;
+    margin-top:10px;
+    align-items:center;
+    gap:10px;
+  }
+  .custom-ratio.show{display:flex;}
+  .custom-ratio span{color:var(--text-muted); font-size:14px;}
+  .custom-ratio input{width:90px; text-align:center;}
+
+  .amount-row{
+    display:flex;
+    gap:10px;
+  }
+  .amount-row input{flex:1;}
+
+  .unit-toggle{
+    display:flex;
+    border:1px solid var(--border);
+    border-radius:4px;
+    overflow:hidden;
+    flex-shrink:0;
+  }
+  .unit-toggle button{
+    background:#15181b;
+    color:var(--text-muted);
+    border:none;
+    padding:0 14px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+  }
+  .unit-toggle button + button{
+    border-left:1px solid var(--border);
+  }
+  .unit-toggle button.active{
+    background:var(--amber);
+    color:#1a1300;
+  }
+
+  .presets{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-top:10px;
+  }
+  .chip{
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--text-muted);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    padding:6px 10px;
+    border-radius:100px;
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+  .chip:hover{border-color:var(--amber); color:var(--amber);}
+  .chip.active{background:rgba(232,147,12,0.12); border-color:var(--amber); color:var(--amber);}
+
+  /* Output column */
+  .col.output{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-start;
+    background:
+      radial-gradient(circle at 50% 0%, rgba(95,168,176,0.05), transparent 60%);
+  }
+
+  .readout{
+    width:100%;
+    background:#0f1214;
+    border:1px solid var(--border);
+    border-radius:4px;
+    padding:16px 18px;
+    margin-top:8px;
+    box-shadow:inset 0 2px 6px rgba(0,0,0,0.5);
+  }
+  .readout-row{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    padding:9px 0;
+  }
+  .readout-row + .readout-row{
+    border-top:1px dashed var(--border-soft);
+  }
+  .readout-key{
+    font-size:11px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--text-muted);
+  }
+  .readout-val{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:20px;
+    font-weight:700;
+    color:var(--amber);
+    letter-spacing:0.02em;
+  }
+  .readout-val.total{
+    color:var(--teal);
+  }
+  .readout-val small{
+    font-size:11px;
+    font-weight:500;
+    color:var(--text-muted);
+    margin-left:4px;
+  }
+
+  .drum{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    margin-top:20px;
+    width:100%;
+  }
+  .drum-vial{
+    flex-shrink:0;
+    width:34px;
+    height:70px;
+    border:2px solid var(--border);
+    border-radius:6px;
+    position:relative;
+    overflow:hidden;
+    background:#0f1214;
+  }
+  .drum-vial .fill-oil{
+    position:absolute;
+    left:0; right:0; bottom:0;
+    background:linear-gradient(180deg, var(--amber), var(--amber-dim));
+    transition:height .4s ease;
+  }
+  .drum-note{
+    font-size:11px;
+    color:var(--text-muted);
+    line-height:1.6;
+  }
+  .drum-note b{color:var(--text);}
+
+  footer{
+    text-align:center;
+    margin-top:20px;
+    font-size:11px;
+    color:var(--text-muted);
+    letter-spacing:0.04em;
+  }
+
+  .error-msg{
+    color:var(--error);
+    font-size:11px;
+    margin-top:8px;
+    display:none;
+  }
+  .error-msg.show{display:block;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Shop Reference · Two-Stroke Fuel</div>
+  <h1>Mix Ratio Calculator</h1>
+  <p class="sub">Pick your gas-to-oil ratio, enter how much gasoline you're starting with, and read off exactly how much oil to pour in.</p>
+
+  <div class="plate">
+    <div class="rivets" aria-hidden="true"></div>
+    <div class="grid">
+      <div class="col inputs">
+
+        <div class="field">
+          <div class="label"><span>Mix Ratio</span><span class="tag" id="ratioTag">50:1</span></div>
+          <select id="ratioSelect">
+            <option value="16">16:1</option>
+            <option value="20">20:1</option>
+            <option value="24">24:1</option>
+            <option value="25">25:1</option>
+            <option value="32">32:1</option>
+            <option value="40">40:1</option>
+            <option value="50" selected>50:1</option>
+            <option value="100">100:1</option>
+            <option value="custom">Custom ratio…</option>
+          </select>
+          <div class="custom-ratio" id="customRow">
+            <span>1 part oil to</span>
+            <input type="number" id="customRatio" min="1" max="500" value="40" inputmode="decimal">
+            <span>parts gas</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="label"><span>Gasoline Amount</span></div>
+          <div class="amount-row">
+            <input type="number" id="fuelAmount" min="0" step="0.01" value="1" inputmode="decimal">
+            <div class="unit-toggle" id="unitToggle">
+              <button data-unit="gal" class="active">GAL</button>
+              <button data-unit="l">L</button>
+            </div>
+          </div>
+          <div class="error-msg" id="errorMsg">Enter a gasoline amount greater than zero.</div>
+          <div class="presets" id="presets">
+            <button class="chip" data-val="1">1 gal</button>
+            <button class="chip" data-val="2">2 gal</button>
+            <button class="chip" data-val="2.5">2.5 gal</button>
+            <button class="chip" data-val="5">5 gal</button>
+            <button class="chip" data-val="6">6 gal</button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="col output">
+        <div class="readout">
+          <div class="readout-row">
+            <span class="readout-key">Add Oil</span>
+            <span class="readout-val" id="oilOut">2.6 <small>oz</small></span>
+          </div>
+          <div class="readout-row">
+            <span class="readout-key">Total Mixed Fuel</span>
+            <span class="readout-val total" id="totalOut">1.02 <small>gal</small></span>
+          </div>
+        </div>
+
+        <div class="drum">
+          <div class="drum-vial"><div class="fill-oil" id="vialFill" style="height:2%;"></div></div>
+          <div class="drum-note">Vial shows oil as a share of the <b>total mixed fuel</b> — not to scale for very lean ratios.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Always confirm the ratio specified by your engine or equipment manufacturer.</footer>
+</div>
+
+<script>
+(function(){
+  const ratioSelect = document.getElementById('ratioSelect');
+  const customRow = document.getElementById('customRow');
+  const customRatio = document.getElementById('customRatio');
+  const ratioTag = document.getElementById('ratioTag');
+  const fuelAmount = document.getElementById('fuelAmount');
+  const unitToggle = document.getElementById('unitToggle');
+  const presets = document.getElementById('presets');
+  const oilOut = document.getElementById('oilOut');
+  const totalOut = document.getElementById('totalOut');
+  const vialFill = document.getElementById('vialFill');
+  const errorMsg = document.getElementById('errorMsg');
+
+  let unit = 'gal'; // gal or l
+
+  function getRatio(){
+    if(ratioSelect.value === 'custom'){
+      const v = parseFloat(customRatio.value);
+      return (isFinite(v) && v > 0) ? v : 40;
+    }
+    return parseFloat(ratioSelect.value);
+  }
+
+  function litersFromInput(val){
+    return unit === 'gal' ? val * 3.785411784 : val;
+  }
+
+  const GAL_TO_ML = 3785.411784;
+  const L_TO_ML = 1000;
+  const ML_TO_OZ = 1/29.5735295625;
+
+  function fmt(n, d){
+    return n.toLocaleString(undefined, {minimumFractionDigits:d, maximumFractionDigits:d});
+  }
+
+  function update(){
+    const ratio = getRatio();
+    ratioTag.textContent = (ratioSelect.value === 'custom') ? ratio.toFixed(0) + ':1 (custom)' : ratio.toFixed(0) + ':1';
+
+    const rawAmount = parseFloat(fuelAmount.value);
+    const validAmount = isFinite(rawAmount) && rawAmount > 0;
+    errorMsg.classList.toggle('show', !validAmount);
+
+    const gasAmount = validAmount ? rawAmount : 0;
+    const gasMl = unit === 'gal' ? gasAmount * GAL_TO_ML : gasAmount * L_TO_ML;
+    const oilMl = gasMl / ratio;
+    const totalMl = gasMl + oilMl;
+
+    // Oil output: always show both fl oz and mL
+    const oilOz = oilMl * ML_TO_OZ;
+    oilOut.innerHTML = fmt(oilOz, oilOz < 10 ? 1 : 0) + ' <small>fl oz</small> &nbsp;/&nbsp; ' + fmt(oilMl, oilMl < 100 ? 0 : 0) + ' <small>mL</small>';
+
+    if(unit === 'gal'){
+      const totalGal = totalMl / GAL_TO_ML;
+      totalOut.innerHTML = fmt(totalGal, 2) + ' <small>gal</small>';
+    } else {
+      const totalL = totalMl / L_TO_ML;
+      totalOut.innerHTML = fmt(totalL, 2) + ' <small>L</small>';
+    }
+
+    // vial fill: oil share of total, exaggerated with sqrt for visibility at low ratios
+    const share = totalMl > 0 ? (oilMl/totalMl) : 0;
+    const displayShare = Math.min(60, Math.max(2, Math.sqrt(share) * 100));
+    vialFill.style.height = displayShare + '%';
+  }
+
+  ratioSelect.addEventListener('change', ()=>{
+    customRow.classList.toggle('show', ratioSelect.value === 'custom');
+    update();
+  });
+  customRatio.addEventListener('input', update);
+  fuelAmount.addEventListener('input', ()=>{
+    presets.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+    update();
+  });
+
+  unitToggle.addEventListener('click', (e)=>{
+    const btn = e.target.closest('button');
+    if(!btn) return;
+    unit = btn.dataset.unit;
+    unitToggle.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    // adjust presets for the unit
+    if(unit === 'gal'){
+      presets.innerHTML = `
+        <button class="chip" data-val="1">1 gal</button>
+        <button class="chip" data-val="2">2 gal</button>
+        <button class="chip" data-val="2.5">2.5 gal</button>
+        <button class="chip" data-val="5">5 gal</button>
+        <button class="chip" data-val="6">6 gal</button>`;
+    } else {
+      presets.innerHTML = `
+        <button class="chip" data-val="1">1 L</button>
+        <button class="chip" data-val="5">5 L</button>
+        <button class="chip" data-val="10">10 L</button>
+        <button class="chip" data-val="12">12 L</button>
+        <button class="chip" data-val="22">22 L</button>
+        <button class="chip" data-val="25">25 L</button>`;
+    }
+    update();
+  });
+
+  presets.addEventListener('click', (e)=>{
+    const chip = e.target.closest('.chip');
+    if(!chip) return;
+    fuelAmount.value = chip.dataset.val;
+    presets.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+    chip.classList.add('active');
+    update();
+  });
+
+  update();
+})();
+</script>
+</body>
+</html>
